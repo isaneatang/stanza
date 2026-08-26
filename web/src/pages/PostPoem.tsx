@@ -13,7 +13,7 @@ export default function PostPoem() {
   const isConnected = useIsConnected();
   const me = useMyAddress();
   const username = useMyUsername();
-  const { addPending, markError } = usePendingActions();
+  const { addPending, markError, dismiss } = usePendingActions();
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -63,6 +63,7 @@ export default function PostPoem() {
 
     try {
       await postPoemTx({ title: title.trim(), content, parentPoemId: 0, license });
+      dismiss(key);
     } catch (err) {
       markError(key, describeTxError(err));
     }

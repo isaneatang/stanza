@@ -1,3 +1,4 @@
+import { maxUint256 } from "viem";
 import { erc20Abi, poetryArchiveAbi } from "./abi";
 import { requireWalletClient, sendAndWait, tryClients } from "./client";
 import { activeNetwork, getContractAddress } from "../config/networks";
@@ -57,7 +58,7 @@ export async function tipPoemTx(args: {
           address: activeNetwork.usdt,
           abi: erc20Abi,
           functionName: "approve",
-          args: [ARCHIVE, args.amountRaw]
+          args: [ARCHIVE, maxUint256]
         })
       );
     }
