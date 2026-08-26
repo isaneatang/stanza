@@ -1,0 +1,27 @@
+{
+  "name": "poetry-archive-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PoetryArchive — on-chain poetry archive on BOT Chain (Tier 1 core contract)",
+  "license": "MIT",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "test:gas": "REPORT_GAS=true hardhat test",
+    "node": "hardhat node",
+    "deploy:localhost": "hardhat run scripts/deploy.ts --network localhost",
+    "deploy:testnet": "hardhat run scripts/deploy.ts --network bohrTestnet",
+    "deploy:mainnet": "hardhat run scripts/deploy.ts --network botMainnet",
+    "clean": "hardhat clean"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "hardhat": "^2.26.3",
+    "typescript": "^5.8.3",
+    "@types/node": "^22.15.0",
+    "dotenv": "^16.5.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.3.0"
+  }
+}
