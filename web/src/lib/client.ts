@@ -32,11 +32,11 @@ function getInjected(): RpcClient | null {
 }
 
 export function getClient(): RpcClient {
-  return getInjected() ?? httpClient;
+  return httpClient;
 }
 
 export function getPreferredClient(): RpcClient {
-  return getClient();
+  return httpClient;
 }
 
 export function getAlternateClient(preferred: RpcClient): RpcClient | null {
@@ -48,9 +48,10 @@ export function getAlternateClient(preferred: RpcClient): RpcClient | null {
 
 export async function tryClients<T>(op: (client: RpcClient) => Promise<T>): Promise<T> {
   const order: RpcClient[] = [];
+  // Reliable public RPC first; the injected provider is fallback for reads.
+  order.push(httpClient);
   const injected = getInjected();
   if (injected) order.push(injected);
-  order.push(httpClient);
 
   let lastError: unknown;
   for (const client of order) {
@@ -72,7 +73,7 @@ export async function requireWalletClient() {
 
 export async function sendAndWait(action: () => Promise<Hash>): Promise<TransactionReceipt> {
   const hash = await action();
-  const receipt = await tryClients((c) => c.waitForTransactionReceipt({ hash }));
+  const receipt = await httpClient.waitForTransactionReceipt({ hash });
   if (receipt.status !== "success") {
     throw new Error("Transaction reverted on-chain");
   }
