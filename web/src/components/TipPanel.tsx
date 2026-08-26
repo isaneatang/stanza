@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { activeNetwork } from "../config/networks";
 import { formatAmount, parseAmount } from "../lib/format";
 import { describeTxError, tipPoemTx } from "../lib/actions";
 import { useIsConnected, useMyAddress } from "../hooks/useWallet";
 import { useAppKit } from "@reown/appkit/react";
 
-type Phase = "idle" | "approving" | "sending" | "done";
+type Phase = "idle" | "sending" | "done";
 
 const PRESETS = ["0.5", "1", "5"];
+
+const DECIMALS = 18;
+const TOKEN = "BOT" as const;
 
 export default function TipPanel({
   poemId,
@@ -21,16 +23,14 @@ export default function TipPanel({
   const me = useMyAddress();
   const { open } = useAppKit();
 
-  const [token, setToken] = useState<"USDT" | "BOT">("USDT");
   const [amountText, setAmountText] = useState("1");
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string>();
   const [floats, setFloats] = useState<{ id: number; label: string }[]>([]);
 
-  const decimals = token === "USDT" ? activeNetwork.usdtDecimals : 18;
-  const amountRaw = parseAmount(amountText, decimals);
+  const amountRaw = parseAmount(amountText, DECIMALS);
   const isSelf = me && me === author.toLowerCase();
-  const busy = phase === "approving" || phase === "sending";
+  const busy = phase === "sending";
   const disabled = !isConnected || isSelf || busy || amountRaw == null || amountRaw <= 0n;
 
   async function send() {
@@ -38,15 +38,10 @@ export default function TipPanel({
     setError(undefined);
     setPhase("sending");
     try {
-      await tipPoemTx({
-        poemId,
-        token,
-        amountRaw,
-        onStatus: (s) => setPhase(s === "approving" ? "approving" : "sending")
-      });
+      await tipPoemTx({ poemId, token: TOKEN, amountRaw });
       setPhase("done");
       const id = Date.now();
-      setFloats((f) => [...f, { id, label: `+${formatAmount(amountRaw, decimals)} ${token}` }]);
+      setFloats((f) => [...f, { id, label: `+${formatAmount(amountRaw, DECIMALS)} ${TOKEN}` }]);
       setTimeout(() => setFloats((f) => f.filter((x) => x.id !== id)), 1300);
       setTimeout(() => setPhase("idle"), 1200);
     } catch (err) {
@@ -85,19 +80,6 @@ export default function TipPanel({
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
-          <div className="flex rounded-lg border border-border overflow-hidden">
-            {(["USDT", "BOT"] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setToken(t)}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                  token === t ? "bg-primary/15 text-primary" : "text-textSecondary hover:text-textPrimary"
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
           <div className="flex gap-1.5">
             {PRESETS.map((p) => (
               <button
@@ -129,13 +111,11 @@ export default function TipPanel({
             onClick={send}
             className="btn-primary ml-auto"
           >
-            {phase === "approving"
-              ? "Approving…"
-              : phase === "sending"
-                ? "Sending…"
-                : phase === "done"
-                  ? "Tipped ✓"
-                  : "Tip"}
+            {phase === "sending"
+              ? "Sending…"
+              : phase === "done"
+                ? "Tipped ✓"
+                : `Tip ${TOKEN}`}
           </motion.button>
         </div>
         <AnimatePresence>
