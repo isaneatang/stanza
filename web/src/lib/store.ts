@@ -376,3 +376,26 @@ export function poemsByAuthor(s: ArchiveState, author: string): Poem[] {
   const target = author.toLowerCase();
   return s.poems.filter((p) => p.author === target).sort((a, b) => b.poemId - a.poemId);
 }
+
+// Likes are deliberately a local UI signal until a satellite engagement contract exists.
+const LIKE_KEY = "stanza-liked-poems";
+
+function readLikedPoems(): Set<number> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(LIKE_KEY) ?? "[]") as number[]);
+  } catch {
+    return new Set();
+  }
+}
+
+export function isPoemLiked(poemId: number): boolean {
+  return readLikedPoems().has(poemId);
+}
+
+export function togglePoemLike(poemId: number): boolean {
+  const liked = readLikedPoems();
+  if (liked.has(poemId)) liked.delete(poemId);
+  else liked.add(poemId);
+  localStorage.setItem(LIKE_KEY, JSON.stringify([...liked]));
+  return liked.has(poemId);
+}

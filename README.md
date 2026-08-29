@@ -117,6 +117,8 @@ Get a WalletConnect project id from [reown.com](https://reown.com) for `VITE_REO
 - **Optimistic UI**: posts appear instantly in a dashed "waiting for confirmation" card, resolve
   when the event lands, roll back with an inline error if the tx reverts. Tips animate
   `+X USDT/BOT` on send.
+- Feed cards show the first four lines, with a full reading view on expand. Likes are currently a
+  local reading-list signal in the browser; they are not presented as on-chain engagement.
 - **Network gate**: connected on the wrong chain → full-screen prompt with one-click switch.
 - Visual theme is a placeholder dark-green palette pending verification against the official
   [BOT Chain brand kit](https://www.botchain.ai/static/BOT%20Chain%20Assets/BOT%20Chain%20Brand%20Kit.zip).
@@ -147,3 +149,11 @@ Get a WalletConnect project id from [reown.com](https://reown.com) for `VITE_REO
 5. **Threaded replies in the UI** — `parentPoemId` already exists in the event schema; only Tier 3
    work remains.
 6. **Event-log mirroring to IPFS/Arweave** for archival redundancy.
+
+### Engagement note
+
+Likes need a durable source of truth before they can be used for ranking or rewards. The current
+frontend stores a reader's liked poem IDs locally as a lightweight interaction, without pretending
+that the signal is global or permanent. A future engagement satellite contract can add a
+`PoemLiked` event keyed by `poemId` and reader address; the frontend can then replace the local
+toggle with a transaction and derive counts from logs without changing the immutable archive.

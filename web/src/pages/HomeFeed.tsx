@@ -67,11 +67,11 @@ export default function HomeFeed() {
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">The Archive</h1>
+          <h1 className="font-serif italic text-3xl tracking-tight">A living archive</h1>
           <p className="text-sm text-textSecondary mt-0.5">
             {s.poems.length === 0
               ? "Nothing here yet. The first poem is yours to write."
-              : `${s.poems.length} poem${s.poems.length === 1 ? "" : "s"}, witnessed by the chain.`}
+              : `${s.poems.length} poem${s.poems.length === 1 ? "" : "s"} witnessed by the chain.`}
           </p>
         </div>
         <div className="flex rounded-lg border border-border overflow-hidden text-xs font-medium">

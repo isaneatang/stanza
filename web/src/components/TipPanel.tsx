@@ -4,13 +4,12 @@ import { formatAmount, parseAmount } from "../lib/format";
 import { describeTxError, tipPoemTx } from "../lib/actions";
 import { useIsConnected, useMyAddress } from "../hooks/useWallet";
 import { useAppKit } from "@reown/appkit/react";
+import { activeNetwork } from "../config/networks";
 
 type Phase = "idle" | "sending" | "done";
 
 const PRESETS = ["0.5", "1", "5"];
 
-const DECIMALS = 18;
-const TOKEN = "BOT" as const;
 
 export default function TipPanel({
   poemId,
@@ -24,11 +23,13 @@ export default function TipPanel({
   const { open } = useAppKit();
 
   const [amountText, setAmountText] = useState("1");
+  const [token, setToken] = useState<"USDT" | "BOT">("USDT");
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string>();
   const [floats, setFloats] = useState<{ id: number; label: string }[]>([]);
 
-  const amountRaw = parseAmount(amountText, DECIMALS);
+  const decimals = token === "USDT" ? activeNetwork.usdtDecimals : 18;
+  const amountRaw = parseAmount(amountText, decimals);
   const isSelf = me && me === author.toLowerCase();
   const busy = phase === "sending";
   const disabled = !isConnected || isSelf || busy || amountRaw == null || amountRaw <= 0n;
@@ -38,10 +39,10 @@ export default function TipPanel({
     setError(undefined);
     setPhase("sending");
     try {
-      await tipPoemTx({ poemId, token: TOKEN, amountRaw });
+      await tipPoemTx({ poemId, token, amountRaw, onStatus: () => undefined });
       setPhase("done");
       const id = Date.now();
-      setFloats((f) => [...f, { id, label: `+${formatAmount(amountRaw, DECIMALS)} ${TOKEN}` }]);
+      setFloats((f) => [...f, { id, label: `+${formatAmount(amountRaw, decimals)} ${token}` }]);
       setTimeout(() => setFloats((f) => f.filter((x) => x.id !== id)), 1300);
       setTimeout(() => setPhase("idle"), 1200);
     } catch (err) {
@@ -79,7 +80,14 @@ export default function TipPanel({
       </AnimatePresence>
 
       <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex rounded-md border border-border overflow-hidden text-xs">
+            {(["USDT", "BOT"] as const).map((currency) => (
+              <button key={currency} type="button" onClick={() => setToken(currency)} className={`px-2.5 py-1.5 transition-colors ${token === currency ? "bg-primary/15 text-primary" : "text-textSecondary hover:text-textPrimary"}`}>
+                {currency}
+              </button>
+            ))}
+          </div>
           <div className="flex gap-1.5">
             {PRESETS.map((p) => (
               <button
@@ -96,6 +104,7 @@ export default function TipPanel({
             ))}
           </div>
           <input
+            aria-label={`Tip amount in ${token}`}
             value={amountText}
             onChange={(e) => {
               setAmountText(e.target.value.replace(/[^0-9.]/g, ""));
@@ -112,10 +121,10 @@ export default function TipPanel({
             className="btn-primary ml-auto"
           >
             {phase === "sending"
-              ? "Sending…"
+              ? "Sending..."
               : phase === "done"
                 ? "Tipped ✓"
-                : `Tip ${TOKEN}`}
+                : `Tip ${token}`}
           </motion.button>
         </div>
         <AnimatePresence>

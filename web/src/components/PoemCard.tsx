@@ -1,13 +1,14 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import type { Poem } from "../lib/store";
-import { tipsForPoem } from "../lib/store";
+import { isPoemLiked, tipsForPoem, togglePoemLike } from "../lib/store";
 import { useArchive } from "../hooks/useArchive";
 import { activeNetwork } from "../config/networks";
 import { formatAmount, timeAgo } from "../lib/format";
 import Avatar from "./Avatar";
 import LicenseBadge from "./LicenseBadge";
 import TipPanel from "./TipPanel";
+import { useState } from "react";
 
 const itemVariants = {
   hidden: { opacity: 0, y: 14 },
@@ -24,6 +25,9 @@ export default function PoemCard({
   const s = useArchive();
   const username = s.usernames[poem.author];
   const totals = tipsForPoem(s, poem.poemId);
+  const [liked, setLiked] = useState(() => isPoemLiked(poem.poemId));
+  const lineCount = poem.content.split("\n").length;
+  const canExpand = lineCount > 4 || poem.content.length > 240;
 
   return (
     <motion.article variants={itemVariants} layout className="card p-5 sm:p-6">
@@ -47,17 +51,27 @@ export default function PoemCard({
         <h3 className="text-base font-semibold mb-2 tracking-tight">{poem.title}</h3>
       ) : null}
 
-      <p
-        className={`font-serif text-[15.5px] leading-relaxed whitespace-pre-wrap break-words ${
-          expanded ? "" : "line-clamp-8"
-        }`}
-      >
+      <p className={`font-serif text-[16px] leading-[1.75] whitespace-pre-wrap break-words ${expanded ? "" : "line-clamp-4"}`}>
         {poem.content}
       </p>
+      {!expanded && canExpand && (
+        <Link to={`/poem/${poem.poemId}`} className="inline-block mt-2 text-sm text-primary hover:text-primaryMuted transition-colors">
+          Continue reading →
+        </Link>
+      )}
 
       <footer className="mt-5 pt-4 border-t border-border flex flex-col gap-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-3 text-xs text-textSecondary">
+          <div className="flex items-center gap-4 text-xs text-textSecondary">
+            <button
+              type="button"
+              aria-pressed={liked}
+              onClick={() => setLiked(togglePoemLike(poem.poemId))}
+              className={`inline-flex items-center gap-1.5 transition-colors ${liked ? "text-rose-400" : "hover:text-rose-300"}`}
+            >
+              <span className="text-base leading-none">{liked ? "♥" : "♡"}</span>
+              <span>{liked ? "Liked" : "Like"}</span>
+            </button>
             <span>
               {totals.count > 0 ? `${totals.count} tip${totals.count === 1 ? "" : "s"}` : "no tips yet"}
             </span>
@@ -71,15 +85,10 @@ export default function PoemCard({
                 {formatAmount(totals.bot, 18)} BOT
               </span>
             )}
-            {!expanded && poem.content.length > 600 && (
-              <Link to={`/poem/${poem.poemId}`} className="link-muted ml-auto">
-                read full
-              </Link>
-            )}
           </div>
           {!expanded && (
             <Link to={`/poem/${poem.poemId}`} className="btn-ghost !py-1.5 !px-3 text-xs">
-              Tip this poem
+              Tip poem
             </Link>
           )}
         </div>
